@@ -43,6 +43,11 @@ void Map::Init()
     m_NoSavefileDialog = new Dialog(glm::vec2(0.0f, 0.0f), 700.0f, 400.0f, Dialog::InvalidSavefile);
     m_GameRunningDialog = new Dialog(glm::vec2(0.0f, 0.0f), 700.0f, 400.0f, Dialog::GameIsRunning);
     m_MasterModeDialog = new Dialog(glm::vec2(0.0f, 0.0f), 700.0f, 400.0f, Dialog::MasterModeChoose);
+    m_CompletionDialog = new Dialog(
+        glm::vec2(0.0f, 0.0f), // Position (centre)
+        700.0f, 400.0f,        // Taille
+        Dialog::Completion     // Type de dialogue
+    );
 
     m_MasterModeIcon.Create("romfs:/mastermodeicon.png");
     m_MasterModeIcon.m_Position = glm::vec2(m_ScreenLeft + 45.0f, m_ScreenBottom + 40.0f);
@@ -255,6 +260,15 @@ void Map::Update()
         }
     }
 
+    if (buttonsPressed & HidNpadButton_ZR)
+    {
+        // On toggle l’ouverture/fermeture du CompletionDialog
+        if (m_CompletionDialog->m_IsOpen)
+            m_CompletionDialog->SetOpen(false);
+        else
+            m_CompletionDialog->SetOpen(true);
+    }
+
     // Analog stick camera movement
     // Read the sticks' position
     HidAnalogStickState analog_stick_l = padGetStickPos(m_Pad, 0);
@@ -352,6 +366,8 @@ void Map::Update()
         m_GameRunningDialog->Update();
     if (m_MasterModeDialog->m_IsOpen)
         m_MasterModeDialog->Update();
+    if (m_CompletionDialog->m_IsOpen)
+        m_CompletionDialog->Update();
 
     // Update objects
     if (SavefileIO::LoadedSavefile)
@@ -456,6 +472,8 @@ void Map::Render()
         m_GameRunningDialog->Render();
     if (m_MasterModeDialog->m_IsOpen)
         m_MasterModeDialog->Render();
+    if (m_CompletionDialog->m_IsOpen)
+        m_CompletionDialog->Render();
 
     if (!m_Legend->m_IsOpen && !m_KorokDialog->m_IsOpen && SavefileIO::LoadedSavefile)
         m_Font.AddTextToBatch("Press X to open legend", glm::vec2(m_ScreenLeft + 20, m_ScreenTop - 30), 0.5f);
@@ -491,15 +509,22 @@ void Map::Render()
         float completionValue_max = CompletionCalculator::CalculateCompletionPercentage(true);
 
         m_Font.AddTextToBatch(
-            completionValue_official < 100.0f ? "Official Completion (on the map): " + std::to_string(completionValue_official).substr(0, 5) + "% / 100%" : "Completion: 100.0%",
+            completionValue_official < 100.0f ? "Official: " + std::to_string(completionValue_official).substr(0, 5) + "%" : "Official: 100.0%",
             glm::vec2(m_ScreenRight - 20, m_ScreenTop - 30),
             0.5f,
             glm::vec3(1.0f),
             ALIGN_RIGHT);
 
         m_Font.AddTextToBatch(
-            completionValue_max < 100.0f ? "Max Completion: " + std::to_string(completionValue_max).substr(0, 5) + "% / 100%" : "Completion: 100.0%",
+            completionValue_max < 100.0f ? "Max: " + std::to_string(completionValue_max).substr(0, 5) + "%" : "Max: 100.0%",
             glm::vec2(m_ScreenRight - 20, m_ScreenTop - 55),
+            0.5f,
+            glm::vec3(1.0f),
+            ALIGN_RIGHT);
+
+        m_Font.AddTextToBatch(
+            "Press ZR to view details",
+            glm::vec2(m_ScreenRight - 20, m_ScreenTop - 105),
             0.5f,
             glm::vec3(1.0f),
             ALIGN_RIGHT);
@@ -579,3 +604,4 @@ KorokDialog *Map::m_KorokDialog;
 Dialog *Map::m_NoSavefileDialog;
 Dialog *Map::m_GameRunningDialog;
 Dialog *Map::m_MasterModeDialog;
+Dialog *Map::m_CompletionDialog = nullptr;

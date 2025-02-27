@@ -7,6 +7,7 @@
 #include "Map.h"
 #include "Legend.h"
 #include "SavefileIO.h"
+#include "CompletionCalculator.h"
 
 Dialog::Dialog(glm::vec2 position, float width, float height, DialogType type)
 {
@@ -41,7 +42,8 @@ Dialog::Dialog(glm::vec2 position, float width, float height, DialogType type)
         m_ChooseProfileButton = new Button(glm::vec2(button2X, buttonY), button2Width, buttonHeight, "Choose another profile");
         m_Title = "No save data found for that user";
         m_Description = "Make sure you chose the correct profile.";
-    } else if (m_Type == DialogType::GameIsRunning)
+    }
+    else if (m_Type == DialogType::GameIsRunning)
     {
         float centerX = -exitButtonWidth / 2.0f;
         m_ExitButton = new Button(glm::vec2(centerX, buttonY), exitButtonWidth, buttonHeight, "Exit");
@@ -55,7 +57,7 @@ Dialog::Dialog(glm::vec2 position, float width, float height, DialogType type)
     else if (m_Type == DialogType::MasterModeChoose)
     {
         m_ExitButton = new Button(glm::vec2(buttonX, buttonY), exitButtonWidth, buttonHeight, "No");
-        m_ExitButton->m_Button.m_Color = Button::SelectedColor;//glm::vec4(197, 77, 77, 0.8f);
+        m_ExitButton->m_Button.m_Color = Button::SelectedColor; // glm::vec4(197, 77, 77, 0.8f);
 
         float button2Width = exitButtonWidth;
         float button2X = bgRight - sideMargin - button2Width;
@@ -64,6 +66,11 @@ Dialog::Dialog(glm::vec2 position, float width, float height, DialogType type)
         m_Description = "Would you like to load it?";
 
         m_SelectedButton = 1;
+    }
+    else if (m_Type == DialogType::Completion)
+    {
+        m_Title = "Completion details"; // Titre du dialog
+        // On laisse m_Description vide ou on la remplit si besoin
     }
 
     UpdateSelectedButton();
@@ -82,26 +89,31 @@ bool Dialog::IsPositionOn(glm::vec2 position)
 
 void Dialog::UpdateSelectedButton()
 {
-    if (m_ExitButton) m_ExitButton->m_IsSelected = false;
-    if (m_ChooseProfileButton) m_ChooseProfileButton->m_IsSelected = false;
+    if (m_ExitButton)
+        m_ExitButton->m_IsSelected = false;
+    if (m_ChooseProfileButton)
+        m_ChooseProfileButton->m_IsSelected = false;
 
-    if (m_SelectedButton == 0) {
+    if (m_SelectedButton == 0)
+    {
         if (m_ExitButton)
             m_ExitButton->m_IsSelected = true;
-    } else if (m_SelectedButton == 1) {
+    }
+    else if (m_SelectedButton == 1)
+    {
         if (m_ChooseProfileButton)
-           m_ChooseProfileButton->m_IsSelected = true;
+            m_ChooseProfileButton->m_IsSelected = true;
     }
 }
 
 void Dialog::Update()
 {
-    HidTouchScreenState state={0};
+    HidTouchScreenState state = {0};
     if (hidGetTouchScreenStates(&state, 1))
     {
         // A new touch
         if (state.count != m_PrevTouchCount)
-        {   
+        {
             m_PrevTouchCount = state.count;
 
             if (state.count == 1)
@@ -109,36 +121,38 @@ void Dialog::Update()
                 // Convert to more suitable coords
                 glm::vec2 touchPosition = glm::vec2(state.touches[0].x - Map::m_CameraWidth / 2, -(state.touches[0].y - Map::m_CameraHeight / 2));
 
-                if (m_ExitButton && m_ExitButton->IsPositionOn(touchPosition)) {
+                if (m_ExitButton && m_ExitButton->IsPositionOn(touchPosition))
+                {
                     m_ExitButton->Click();
                     m_SelectedButton = 0;
 
-                    if (m_Type != DialogType::MasterModeChoose) 
+                    if (m_Type != DialogType::MasterModeChoose)
                         Map::m_ShouldExit = true;
-                    else if (m_Type == DialogType::MasterModeChoose) 
+                    else if (m_Type == DialogType::MasterModeChoose)
                     {
                         m_IsOpen = false;
                         Map::m_Legend->m_IsOpen = true;
                     }
-                } else if (m_ChooseProfileButton && m_ChooseProfileButton->IsPositionOn(touchPosition))
+                }
+                else if (m_ChooseProfileButton && m_ChooseProfileButton->IsPositionOn(touchPosition))
                 {
                     m_ChooseProfileButton->Click();
                     m_SelectedButton = 1;
 
-                    if (m_Type == DialogType::InvalidSavefile) 
+                    if (m_Type == DialogType::InvalidSavefile)
                     {
                         SavefileIO::LoadGamesave(false, true);
                         Map::UpdateMapObjects();
-                    } 
+                    }
                     // else if (m_Type == DialogType::MasterModeChoose)
                     //     Map::m_ShouldLoadMastermodeFile = true;
                 }
-                    
+
                 UpdateSelectedButton();
             }
         }
     }
-    
+
     u64 buttonsPressed = padGetButtonsDown(Map::m_Pad);
     if (buttonsPressed & HidNpadButton_Left)
     {
@@ -165,22 +179,22 @@ void Dialog::Update()
         // Exit button
         if (m_SelectedButton == 0)
         {
-            if (m_Type != DialogType::MasterModeChoose) 
+            if (m_Type != DialogType::MasterModeChoose)
                 Map::m_ShouldExit = true;
             else if (m_Type == DialogType::MasterModeChoose)
             {
                 m_IsOpen = false;
                 Map::m_Legend->m_IsOpen = true;
             }
-                
-        } 
-        else if (m_SelectedButton == 1) {
+        }
+        else if (m_SelectedButton == 1)
+        {
             if (m_Type == DialogType::InvalidSavefile)
             {
                 SavefileIO::LoadGamesave(false, true);
                 Map::UpdateMapObjects();
-            } 
-                
+            }
+
             // else if (m_Type == DialogType::MasterModeChoose)
             //     Map::m_ShouldLoadMastermodeFile = true;
         }
@@ -199,13 +213,47 @@ void Dialog::Render()
 
     glm::vec2 titleSize = Map::m_Font.RenderText(m_Title, glm::vec2(0.0f, top - titleTopMargin), 0.75f, glm::vec3(1.0f), ALIGN_CENTER);
 
-    float descTop = top - titleTopMargin - titleSize.y - 10.0f; 
+    if (m_Type == DialogType::Completion)
+    {
+        // On récupère les stats
+        float completionValue_official = CompletionCalculator::CalculateCompletionPercentage(false);
+        float completionValue_max = CompletionCalculator::CalculateCompletionPercentage(true);
+
+        Map::m_Font.RenderText(
+            completionValue_official < 100.0f ? "Official Completion (on the map): " + std::to_string(completionValue_official).substr(0, 5) + "% / 100%" : "Official Completion (on the map): 100.0% / 100%",
+            glm::vec2(0.0f, top - titleTopMargin - 120.f),
+            0.6f,
+            glm::vec3(1.0f),
+            ALIGN_CENTER);
+
+        // Ex: Max
+        Map::m_Font.RenderText(
+            completionValue_max < 100.0f ? "Max Completion: " + std::to_string(completionValue_max).substr(0, 5) + "% / 100%" : "Max Completion: 100.0% / 100%",
+            glm::vec2(0.0f, top - titleTopMargin - 160.f),
+            0.6f,
+            glm::vec3(1.0f),
+            ALIGN_CENTER);
+
+        Map::m_Font.RenderText(
+            "Press ZR again to close",
+            glm::vec2(0.0f, top - titleTopMargin - 220.f),
+            0.6f,
+            glm::vec3(0.7f),
+            ALIGN_CENTER);
+
+        // Vous pouvez ajouter plus de détails :
+        // Sanctuaires, koroks, etc.
+    }
+
+    float descTop = top - titleTopMargin - titleSize.y - 10.0f;
 
     Map::m_Font.RenderText(m_Description, glm::vec2(0.0f, descTop - 30.0f), 0.5f, glm::vec3(1.0f), ALIGN_CENTER);
     Map::m_Font.RenderText(m_Description2, glm::vec2(0.0f, descTop - 70.0f), 0.5f, glm::vec3(1.0f), ALIGN_CENTER);
 
-    if (m_ExitButton) m_ExitButton->Render();
-    if (m_ChooseProfileButton) m_ChooseProfileButton->Render();
+    if (m_ExitButton)
+        m_ExitButton->Render();
+    if (m_ChooseProfileButton)
+        m_ChooseProfileButton->Render();
 
     Map::m_Font.m_ViewMatrix = &Map::m_ViewMatrix;
 }
@@ -216,18 +264,18 @@ void Dialog::SetOpen(bool open)
     {
         m_IsOpen = true;
         Map::m_Legend->m_IsOpen = false;
-    } else {
+    }
+    else
+    {
         m_IsOpen = false;
     }
 }
 
 Dialog::~Dialog()
 {
-
 }
 
-
-Button::Button(glm::vec2 position, float width, float height, const std::string& text)
+Button::Button(glm::vec2 position, float width, float height, const std::string &text)
 {
     m_Width = width;
     m_Height = height;
@@ -238,8 +286,7 @@ Button::Button(glm::vec2 position, float width, float height, const std::string&
         glm::vec2(position.x, position.y - height),
         glm::vec2(position.x + width, position.y - height),
         glm::vec2(position.x + width, position.y),
-        glm::vec2(position.x, position.y)
-    );
+        glm::vec2(position.x, position.y));
 
     m_Button.m_Color = Button::HighlightedColor;
     m_Button.m_ProjectionMatrix = &Map::m_ProjectionMatrix;
@@ -249,8 +296,7 @@ Button::Button(glm::vec2 position, float width, float height, const std::string&
         glm::vec2(position.x, position.y - height),
         glm::vec2(position.x + width, position.y - height),
         glm::vec2(position.x + width, position.y),
-        glm::vec2(position.x, position.y)
-    );
+        glm::vec2(position.x, position.y));
     m_Border.m_ProjectionMatrix = &Map::m_ProjectionMatrix;
 }
 
@@ -275,13 +321,13 @@ bool Button::IsPositionOn(glm::vec2 position)
 void Button::Render()
 {
     m_Button.Render();
-    if (m_IsSelected) m_Border.Render();
+    if (m_IsSelected)
+        m_Border.Render();
 
     float mainTextMargin = 35.0f;
     glm::vec2 mainTextPosition(
         m_Position.x + m_Width / 2,
-        m_Position.y - (m_Height / 1.65f)
-    );
+        m_Position.y - (m_Height / 1.65f));
 
     Map::m_Font.RenderText(m_Text, mainTextPosition, 0.55f, glm::vec3(1.0), ALIGN_CENTER);
 }

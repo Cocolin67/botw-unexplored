@@ -80,4 +80,5 @@ namespace Map
     extern Dialog* m_NoSavefileDialog;
     extern Dialog* m_GameRunningDialog;
     extern Dialog* m_MasterModeDialog;
+    extern Dialog* m_CompletionDialog;
 };

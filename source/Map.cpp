@@ -12,8 +12,9 @@
 #include "MapObject.hpp"
 #include "KorokDialog.h"
 #include "Log.h"
+#include "CompletionCalculator.h"
 
-#include "SavefileIO.h" 
+#include "SavefileIO.h"
 
 constexpr float MapScale = 0.25f;
 
@@ -26,7 +27,7 @@ void Map::Init()
     // Map image
     m_MapBackground.Create("romfs:/map-lowres.png");
     m_MapBackground.m_ProjectionMatrix = &m_ProjectionMatrix;
-    m_MapBackground.m_ViewMatrix = &m_ViewMatrix; 
+    m_MapBackground.m_ViewMatrix = &m_ViewMatrix;
 
     // Load font
     m_Font.Load("romfs:/arial.ttf");
@@ -62,7 +63,7 @@ void Map::Init()
     // Create hinoxes
     m_Hinoxes = new MapObject<Data::Hinox>[Data::HinoxesCount];
     MapObject<Data::Hinox>::Init("romfs:/hinox.png", Data::HinoxesCount);
-    
+
     // Create taluses
     m_Taluses = new MapObject<Data::Talus>[Data::TalusesCount];
     MapObject<Data::Talus>::Init("romfs:/talus.png", Data::TalusesCount);
@@ -90,9 +91,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_Koroks[i].m_Found = std::find(
-            SavefileIO::foundKoroks.begin(), 
-            SavefileIO::foundKoroks.end(), 
-            &Data::Koroks[i]) != SavefileIO::foundKoroks.end();
+                                  SavefileIO::foundKoroks.begin(),
+                                  SavefileIO::foundKoroks.end(),
+                                  &Data::Koroks[i]) != SavefileIO::foundKoroks.end();
     }
 
     for (int i = 0; i < Data::ShrineCount; i++) // Shrine
@@ -101,9 +102,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_Shrines[i].m_Found = std::find(
-            SavefileIO::foundShrines.begin(), 
-            SavefileIO::foundShrines.end(), 
-            &Data::Shrines[i]) != SavefileIO::foundShrines.end();
+                                   SavefileIO::foundShrines.begin(),
+                                   SavefileIO::foundShrines.end(),
+                                   &Data::Shrines[i]) != SavefileIO::foundShrines.end();
     }
 
     for (int i = 0; i < Data::DLCShrineCount; i++) // DLC Shrine
@@ -112,9 +113,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_DLCShrines[i].m_Found = std::find(
-            SavefileIO::foundDLCShrines.begin(), 
-            SavefileIO::foundDLCShrines.end(), 
-            &Data::DLCShrines[i]) != SavefileIO::foundDLCShrines.end();
+                                      SavefileIO::foundDLCShrines.begin(),
+                                      SavefileIO::foundDLCShrines.end(),
+                                      &Data::DLCShrines[i]) != SavefileIO::foundDLCShrines.end();
     }
 
     for (int i = 0; i < Data::HinoxesCount; i++) // Hinox
@@ -123,9 +124,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_Hinoxes[i].m_Found = std::find(
-            SavefileIO::defeatedHinoxes.begin(), 
-            SavefileIO::defeatedHinoxes.end(), 
-            &Data::Hinoxes[i]) != SavefileIO::defeatedHinoxes.end();
+                                   SavefileIO::defeatedHinoxes.begin(),
+                                   SavefileIO::defeatedHinoxes.end(),
+                                   &Data::Hinoxes[i]) != SavefileIO::defeatedHinoxes.end();
     }
 
     for (int i = 0; i < Data::TalusesCount; i++) // Talus
@@ -134,9 +135,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_Taluses[i].m_Found = std::find(
-            SavefileIO::defeatedTaluses.begin(), 
-            SavefileIO::defeatedTaluses.end(), 
-            &Data::Taluses[i]) != SavefileIO::defeatedTaluses.end();
+                                   SavefileIO::defeatedTaluses.begin(),
+                                   SavefileIO::defeatedTaluses.end(),
+                                   &Data::Taluses[i]) != SavefileIO::defeatedTaluses.end();
     }
 
     for (int i = 0; i < Data::MoldugasCount; i++) // Molduga
@@ -145,9 +146,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_Moldugas[i].m_Found = std::find(
-            SavefileIO::defeatedMoldugas.begin(), 
-            SavefileIO::defeatedMoldugas.end(), 
-            &Data::Moldugas[i]) != SavefileIO::defeatedMoldugas.end();
+                                    SavefileIO::defeatedMoldugas.begin(),
+                                    SavefileIO::defeatedMoldugas.end(),
+                                    &Data::Moldugas[i]) != SavefileIO::defeatedMoldugas.end();
     }
 
     for (int i = 0; i < Data::LocationsCount; i++) // Locations
@@ -157,9 +158,9 @@ void Map::UpdateMapObjects()
 
         // Check if the korok has been found (if the found vector contains it)
         m_Locations[i].m_Found = std::find(
-            SavefileIO::visitedLocations.begin(), 
-            SavefileIO::visitedLocations.end(), 
-            &Data::Locations[i]) != SavefileIO::visitedLocations.end();
+                                     SavefileIO::visitedLocations.begin(),
+                                     SavefileIO::visitedLocations.end(),
+                                     &Data::Locations[i]) != SavefileIO::visitedLocations.end();
     }
 
     Log("Updated map objects");
@@ -167,7 +168,8 @@ void Map::UpdateMapObjects()
 
 void Map::Update()
 {
-    if (m_Pad == nullptr) return;
+    if (m_Pad == nullptr)
+        return;
 
     u64 buttonsPressed = padGetButtonsDown(m_Pad);
     u64 buttonsDown = padGetButtons(m_Pad);
@@ -176,13 +178,13 @@ void Map::Update()
     float dragAmont = 0.85f;
     float analogStickMovementSpeed = 10.0f;
     float minZoom = 0.1f;
-        
+
     // Handle zooming like BotW
     HidAnalogStickState analog_stick_r = padGetStickPos(m_Pad, 1);
 
     // Get the stick position between -1.0f and 1.0f, instead of -32767 and 32767
     glm::vec2 stickRPosition = glm::vec2((float)analog_stick_r.x / (float)JOYSTICK_MAX, (float)analog_stick_r.y / (float)JOYSTICK_MAX);
-   
+
     float deadzone = 0.1f;
     if (fabs(stickRPosition.y) >= deadzone)
         m_Zoom *= 1.0f + zoomAmount * stickRPosition.y;
@@ -201,7 +203,8 @@ void Map::Update()
         m_CameraPosition = glm::vec2(0.0f, 0.0f);
     }
 
-    if (m_Zoom < minZoom) m_Zoom = minZoom;
+    if (m_Zoom < minZoom)
+        m_Zoom = minZoom;
 
     // Open profile picker
     if (buttonsPressed & HidNpadButton_Minus)
@@ -245,7 +248,7 @@ void Map::Update()
 
     if (buttonsPressed & HidNpadButton_B)
     {
-        if (m_KorokDialog->m_IsOpen) 
+        if (m_KorokDialog->m_IsOpen)
         {
             m_Koroks[m_KorokDialog->m_KorokIndex].m_Found = true;
             m_KorokDialog->SetOpen(false);
@@ -258,7 +261,7 @@ void Map::Update()
 
     // Get the stick position between -1.0f and 1.0f, instead of -32767 and 32767
     glm::vec2 stickLPosition = glm::vec2((float)analog_stick_l.x / (float)JOYSTICK_MAX, (float)analog_stick_l.y / (float)JOYSTICK_MAX);
-   
+
     float distanceToCenter = glm::distance(stickLPosition, glm::vec2(0.0f, 0.0f));
     if (distanceToCenter >= deadzone)
         m_CameraPosition += stickLPosition * (analogStickMovementSpeed / m_Zoom);
@@ -268,25 +271,26 @@ void Map::Update()
     m_ViewMatrix = glm::translate(m_ViewMatrix, glm::vec3(-m_CameraPosition, 1.0));
 
     // Dragging
-    HidTouchScreenState state={0};
-    if (hidGetTouchScreenStates(&state, 1)) {
+    HidTouchScreenState state = {0};
+    if (hidGetTouchScreenStates(&state, 1))
+    {
         // Convert to more suitable coords
-        glm::vec2 touchPosition = glm::vec2(state.touches[0].x - m_CameraWidth / 2, -(state.touches[0].y - m_CameraHeight / 2)); 
+        glm::vec2 touchPosition = glm::vec2(state.touches[0].x - m_CameraWidth / 2, -(state.touches[0].y - m_CameraHeight / 2));
 
         // A new touch
         if (state.count != m_PrevTouchCount)
-        {   
+        {
             m_PrevTouchCount = state.count;
 
             // Dont drag if finger is on the legend
-            if (!(m_Legend->m_IsOpen && m_Legend->IsPositionOnLegend(touchPosition)) && 
+            if (!(m_Legend->m_IsOpen && m_Legend->IsPositionOnLegend(touchPosition)) &&
                 !(m_NoSavefileDialog->m_IsOpen && m_NoSavefileDialog->IsPositionOn(touchPosition)) &&
                 !(m_GameRunningDialog->m_IsOpen && m_GameRunningDialog->IsPositionOn(touchPosition)) &&
                 !(m_MasterModeDialog->m_IsOpen && m_MasterModeDialog->IsPositionOn(touchPosition)))
             {
                 // Check if the finger was pressed
                 if (state.count == 1)
-                {   
+                {
                     // Check if clicked korok
                     bool clicked = false;
                     for (int i = 0; i < Data::KoroksCount; i++)
@@ -306,15 +310,15 @@ void Map::Update()
                     // Hide the korok info if no korok was clicked on
                     if (!clicked)
                     {
-                        //m_KorokDialog->SetOpen(false);
+                        // m_KorokDialog->SetOpen(false);
                     }
-                    
+
                     // Only drag if not clicking on korok
                     m_IsDragging = true;
                     m_PrevTouchPosition = touchPosition; // The origin of the drag
                 }
             }
-                
+
             // Check if the finger was released
             if (state.count == 0)
                 m_IsDragging = false;
@@ -326,7 +330,7 @@ void Map::Update()
             // Calculate how much the finger has moved this frame
             glm::vec2 delta = m_PrevTouchPosition - touchPosition;
 
-            // Move the camera by the delta. Flip the direction of the y-coordinate and 
+            // Move the camera by the delta. Flip the direction of the y-coordinate and
             // divide by the zoom to move the same amount irregardless of the zoom
             m_CameraPosition += (delta * dragAmont) / m_Zoom;
 
@@ -339,10 +343,10 @@ void Map::Update()
     m_ViewMatrix = glm::scale(m_ViewMatrix, glm::vec3(m_Zoom, m_Zoom, 0.0f));
     m_ViewMatrix = glm::translate(m_ViewMatrix, glm::vec3(-m_CameraPosition, 1.0));
 
-    if (m_Legend->m_IsOpen) 
+    if (m_Legend->m_IsOpen)
         m_Legend->Update();
 
-    if (m_NoSavefileDialog->m_IsOpen) 
+    if (m_NoSavefileDialog->m_IsOpen)
         m_NoSavefileDialog->Update();
     if (m_GameRunningDialog->m_IsOpen)
         m_GameRunningDialog->Update();
@@ -379,11 +383,11 @@ void Map::Render()
     m_MapBackground.Render();
 
     Map::m_Font.BeginBatch();
-    
+
     if (SavefileIO::LoadedSavefile)
     {
-        if (m_Legend->m_Show[IconButton::ButtonTypes::Koroks]) 
-        {   
+        if (m_Legend->m_Show[IconButton::ButtonTypes::Koroks])
+        {
             // Render korok paths
             for (int k = 0; k < Data::KoroksCount; k++)
             {
@@ -395,7 +399,7 @@ void Map::Render()
                 if (m_Koroks[k].m_Found && !m_Legend->m_Show[IconButton::ShowCompleted])
                     continue;
 
-                Data::KorokPath* path = m_Koroks[k].m_ObjectData->path;
+                Data::KorokPath *path = m_Koroks[k].m_ObjectData->path;
 
                 // 0 -> 1
                 // 1 -> 2
@@ -428,7 +432,7 @@ void Map::Render()
         if (m_Legend->m_Show[IconButton::ButtonTypes::Taluses])
             MapObject<Data::Talus>::Render();
         if (m_Legend->m_Show[IconButton::ButtonTypes::Moldugas])
-           MapObject<Data::Molduga>::Render();
+            MapObject<Data::Molduga>::Render();
         if (m_Legend->m_Show[IconButton::ButtonTypes::Locations])
         {
             for (int i = 0; i < Data::LocationsCount; i++)
@@ -443,10 +447,10 @@ void Map::Render()
         m_MasterModeIcon.Render();
 
     m_Font.BeginBatch();
-    if (m_Legend->m_IsOpen) 
+    if (m_Legend->m_IsOpen)
         m_Legend->Render();
 
-    if (m_NoSavefileDialog->m_IsOpen) 
+    if (m_NoSavefileDialog->m_IsOpen)
         m_NoSavefileDialog->Render();
     if (m_GameRunningDialog->m_IsOpen)
         m_GameRunningDialog->Render();
@@ -454,7 +458,7 @@ void Map::Render()
         m_MasterModeDialog->Render();
 
     if (!m_Legend->m_IsOpen && !m_KorokDialog->m_IsOpen && SavefileIO::LoadedSavefile)
-        m_Font.AddTextToBatch("Press X to open legend", glm::vec2(m_ScreenLeft + 20, m_ScreenTop - 30), 0.5f);  
+        m_Font.AddTextToBatch("Press X to open legend", glm::vec2(m_ScreenLeft + 20, m_ScreenTop - 30), 0.5f);
 
     if (SavefileIO::LoadedSavefile)
     {
@@ -467,18 +471,39 @@ void Map::Render()
         float bottomTextX = m_ScreenRight - 30;
 
         if (SavefileIO::MasterModeFileExists && !m_LoadMasterMode)
-            m_Font.AddTextToBatch("Press Y to load master mode", glm::vec2(bottomTextX, m_ScreenBottom + 55), 0.5f, glm::vec3(1.0f), ALIGN_RIGHT);  
+            m_Font.AddTextToBatch("Press Y to load master mode", glm::vec2(bottomTextX, m_ScreenBottom + 55), 0.5f, glm::vec3(1.0f), ALIGN_RIGHT);
         else if (m_LoadMasterMode)
-            m_Font.AddTextToBatch("Press Y to load normal mode", glm::vec2(bottomTextX, m_ScreenBottom + 55), 0.5f, glm::vec3(1.0f), ALIGN_RIGHT);  
-    
-        m_Font.AddTextToBatch("L and R to zoom, (-) to change user, (+) to exit", 
-            glm::vec2(bottomTextX, m_ScreenBottom + 20), 0.5f, glm::vec3(1.0f), ALIGN_RIGHT);  
+            m_Font.AddTextToBatch("Press Y to load normal mode", glm::vec2(bottomTextX, m_ScreenBottom + 55), 0.5f, glm::vec3(1.0f), ALIGN_RIGHT);
+
+        m_Font.AddTextToBatch("L and R to zoom, (-) to change user, (+) to exit",
+                              glm::vec2(bottomTextX, m_ScreenBottom + 20), 0.5f, glm::vec3(1.0f), ALIGN_RIGHT);
     }
 
     m_KorokDialog->Render(m_ProjectionMatrix, m_ViewMatrix);
 
     glm::mat4 emptyViewMatrix(1.0);
-    m_Font.m_ViewMatrix = &emptyViewMatrix; // Don't draw the text relative to the camera 
+    m_Font.m_ViewMatrix = &emptyViewMatrix; // Don't draw the text relative to the camera
+
+    // Completion Meter !!NEW by Cocolin67!!
+    if (SavefileIO::LoadedSavefile)
+    {
+        float completionValue_official = CompletionCalculator::CalculateCompletionPercentage(false);
+        float completionValue_max = CompletionCalculator::CalculateCompletionPercentage(true);
+
+        m_Font.AddTextToBatch(
+            completionValue_official < 100.0f ? "Official Completion (on the map): " + std::to_string(completionValue_official).substr(0, 5) + "% / 100%" : "Completion: 100.0%",
+            glm::vec2(m_ScreenRight - 20, m_ScreenTop - 30),
+            0.5f,
+            glm::vec3(1.0f),
+            ALIGN_RIGHT);
+
+        m_Font.AddTextToBatch(
+            completionValue_max < 100.0f ? "Max Completion: " + std::to_string(completionValue_max).substr(0, 5) + "% / 100%" : "Completion: 100.0%",
+            glm::vec2(m_ScreenRight - 20, m_ScreenTop - 55),
+            0.5f,
+            glm::vec3(1.0f),
+            ALIGN_RIGHT);
+    }
 
     m_Font.RenderBatch();
 
@@ -522,7 +547,7 @@ void Map::Destory()
 
 TexturedQuad Map::m_MapBackground;
 Font Map::m_Font;
-LineRenderer* Map::m_LineRenderer;
+LineRenderer *Map::m_LineRenderer;
 TexturedQuad Map::m_MasterModeIcon;
 
 float Map::m_Zoom = Map::m_DefaultZoom;
@@ -540,17 +565,17 @@ bool Map::m_IsDragging = false;
 bool Map::m_ShouldExit = false;
 bool Map::m_LoadMasterMode = false;
 
-PadState* Map::m_Pad;
-MapObject<Data::Korok>* Map::m_Koroks;
-MapObject<Data::Shrine>* Map::m_Shrines;
-MapObject<Data::DLCShrine>* Map::m_DLCShrines;
-MapObject<Data::Hinox>* Map::m_Hinoxes;
-MapObject<Data::Talus>* Map::m_Taluses;
-MapObject<Data::Molduga>* Map::m_Moldugas;
-MapLocation* Map::m_Locations;
+PadState *Map::m_Pad;
+MapObject<Data::Korok> *Map::m_Koroks;
+MapObject<Data::Shrine> *Map::m_Shrines;
+MapObject<Data::DLCShrine> *Map::m_DLCShrines;
+MapObject<Data::Hinox> *Map::m_Hinoxes;
+MapObject<Data::Talus> *Map::m_Taluses;
+MapObject<Data::Molduga> *Map::m_Moldugas;
+MapLocation *Map::m_Locations;
 
-Legend* Map::m_Legend;
-KorokDialog* Map::m_KorokDialog;
-Dialog* Map::m_NoSavefileDialog;
-Dialog* Map::m_GameRunningDialog;
-Dialog* Map::m_MasterModeDialog;
+Legend *Map::m_Legend;
+KorokDialog *Map::m_KorokDialog;
+Dialog *Map::m_NoSavefileDialog;
+Dialog *Map::m_GameRunningDialog;
+Dialog *Map::m_MasterModeDialog;
